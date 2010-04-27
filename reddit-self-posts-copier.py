@@ -3,7 +3,7 @@
 
 '''Reddit Self Posts Copier.
 
-Copies self posts from a list of subreddits to a target subreddit.'''
+Copies self posts from one or more subreddit to a target subreddit.'''
 
 # Copyright (c) 2010 Eli Grey; http://eligrey.com
 #
