@@ -4,11 +4,20 @@ Reddit Bots
 A collection of various reddit bots.
 
 
+Reddit Feeds Auto-Poster
+------------------------
+
+Reddit Feeds Auto-Poster is a Python script that automatically posts new entries from
+feeds to a subreddit.
+
+Coming soon! (read: sometime in 2010)
+
+
 Reddit Self Posts Copier
 ------------------------
 
-Reddit Self Posts Copier is a Python script that copies self posts from a list of
-subreddits to a target subreddit.
+Reddit Self Posts Copier is a Python script that copies self posts from one or more
+subreddit to a target subreddit.
 
 ### Usage
 
