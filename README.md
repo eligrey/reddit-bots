@@ -60,6 +60,6 @@ subreddit to a target subreddit.
   <dt><code>-l LIMIT</code>, <code>--limit=LIMIT</code> (defaults to <code>25</code>)</dt>
   <dd>amount of submissions to poll for</dd>
   
-  <dt><code>-o POLL_RATE</code>, <code>--poll-rate=POLL_RATE</code> (defaults to <code>60</code>)</dt>
+  <dt><code>-o POLL_RATE</code>, <code>--poll-rate=POLL_RATE</code> (defaults to <code>120</code>)</dt>
   <dd>rate in seconds at which to poll for new submissions</dd>
 </dl>
