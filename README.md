@@ -63,3 +63,6 @@ subreddit to a target subreddit.
   <dt><code>-o POLL_RATE</code>, <code>--poll-rate=POLL_RATE</code> (defaults to <code>120</code>)</dt>
   <dd>rate in seconds at which to poll for new submissions</dd>
 </dl>
+
+
+![Tracking image](//in.getclicky.com/212712ns.gif =1x1)
