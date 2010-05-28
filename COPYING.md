@@ -1,7 +1,7 @@
 MIT/X11 license
 ---------------
 
-Copyright (c) 2010 [Eli Grey]
+Copyright &copy; 2010 [Elijah Grey]
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
@@ -24,4 +24,5 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
-  [Eli Grey]: http://eligrey.com
+
+  [Elijah Grey]: http://eligrey.com
