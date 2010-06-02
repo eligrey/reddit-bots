@@ -147,6 +147,8 @@ if __name__ == '__main__':
         if options.verbose:
             print('\nSaving submitted posts file.')
         
-        open(options.save_file, 'a').write('\n' + '\n'.join(newly_submitted))
+        if len(newly_submitted) > 0:
+            open(options.save_file, 'a').write('\n'.join(newly_submitted) + '\n')
+        
         quit()
 
