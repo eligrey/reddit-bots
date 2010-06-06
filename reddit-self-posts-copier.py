@@ -106,8 +106,8 @@ class SubredditSubmissionsCopier:
                 if submission['data']['is_self'] and \
                    submission['data']['id'] not in newly_submitted and \
                    submission['data']['id'] not in submitted:
-                    self.submit(submission['data'], modhash)
                     sleep(self.options.submit_rate)
+                    self.submit(submission['data'], modhash)
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -147,7 +147,7 @@ if __name__ == '__main__':
     try:
         submitted = open(options.save_file, 'r').read().split('\n')
         if options.verbose:
-            print('Loaded %s' % options.save_file)
+            print('Loaded ' + options.save_file)
     except IOError:
         submitted = []
     
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         if len(newly_submitted) > 0:
             if options.verbose:
-                print('\nSaving %s' % options.save_file)
+                print('\nSaving ' + options.save_file)
             open(options.save_file, 'a').write('\n'.join(newly_submitted) + '\n')
         
         quit()
