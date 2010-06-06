@@ -17,7 +17,7 @@ from time import sleep
 import json
 import re
 
-VERSION = '1.1.1'
+VERSION = '2010-06-06'
 APP_TITLE = 'Reddit Self Posts Copier'
 USER_AGENT = {'User-agent': APP_TITLE + '/' + VERSION}
 
@@ -35,9 +35,7 @@ def request_json(request):
 def unescape_bracket_entities(html):
     left_bracket = re.compile('&lt;', re.IGNORECASE)
     right_bracket = re.compile('&gt;', re.IGNORECASE)
-    unescaped = left_bracket.sub('<', html)
-    unescaped = right_bracket.sub('>', html)
-    return unescaped
+    return right_bracket.sub('>', left_bracket.sub('<', html))
 
 class RedditInvalidUsernamePasswordException(Exception):
     pass
