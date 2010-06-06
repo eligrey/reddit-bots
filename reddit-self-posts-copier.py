@@ -15,8 +15,9 @@ from urllib import error as urlerror
 from http import cookiejar
 from time import sleep
 import json
+import re
 
-VERSION = '1.1'
+VERSION = '1.1.1'
 APP_TITLE = 'Reddit Self Posts Copier'
 USER_AGENT = {'User-agent': APP_TITLE + '/' + VERSION}
 
@@ -25,81 +26,78 @@ def set_title(title):
 
 set_title(APP_TITLE)
 
+def request_json(request):
+    try:
+        return json.loads(urlrequest.urlopen(request).read().decode('utf-8'))
+    except (urlerror.URLError, KeyError, ValueError):
+        return None
+
+def unescape_bracket_entities(html):
+    left_bracket = re.compile('&lt;', re.IGNORECASE)
+    right_bracket = re.compile('&gt;', re.IGNORECASE)
+    unescaped = left_bracket.sub('<', html)
+    unescaped = right_bracket.sub('>', html)
+    return unescaped
+
 class RedditInvalidUsernamePasswordException(Exception):
     pass
 
 class SubredditSubmissionsCopier:
     def __init__(self, options):
-        self.username = options.username
-        self.password = options.password
-        self.verbose = options.verbose
-        self.target = options.target
-        self.site = options.site
-        self.poll_url = '%sr/%s/hot.json?limit=%d' % (self.site, '+'.join(options.subreddits), options.limit)
-        self.login_url = '%sapi/login' % self.site
-        self.submit_url = '%sapi/submit' % self.site
+        self.options = options
+        self._maybe_down_message = 'Perhaps the connection was interupted or %s is down.' % self.options.site
         cookie_jar = cookiejar.FileCookieJar()
         urlrequest.install_opener(urlrequest.build_opener(urlrequest.HTTPCookieProcessor(cookie_jar)))
     
-    def _request_json(self, request):
-        try:
-            return json.loads(urlrequest.urlopen(request).read().decode('utf-8'))
-        except urlerror.URLError:
-            if self.verbose:
-                print('Problem requesting %s' % request)
-            return None
-        except (KeyError, ValueError):
-            if self.verbose:
-                print('The JSON returned was incomplete. Perhaps the connection was interupted or %s is down.' % self.site)
-            return None
-    
     def login(self):
         params = urlparse.urlencode({
-            'user': self.username,
-            'passwd': self.password
+            'user': self.options.username,
+            'passwd': self.options.password
         })
         
-        request = urlrequest.Request(self.login_url, params, USER_AGENT)
+        request = urlrequest.Request(self.options.login_url, params, USER_AGENT)
         
-        if self.verbose:
-            print('Logging in as %s.' % self.username)
+        if self.options.verbose:
+            print('Logging in as %s.' % self.options.username)
         
-        response = self._request_json(request)
+        response = request_json(request)
         
         if response is None or 'invalid password' in str(response):
             raise RedditInvalidUsernamePasswordException('Login failed. Please ensure that your username and password are correct.')
         
-        set_title('%s - %s' % (self.target, APP_TITLE))
+        set_title('%s - %s' % (self.options.target, APP_TITLE))
     
     def submit(self, submission, modhash):
         newly_submitted.append(submission['id'])
         
-        if self.verbose:
+        if self.options.verbose:
             print('Submitting %r from %s.\n' % (submission['title'], submission['subreddit']))
         
         params = urlparse.urlencode({
-            'title': submission['title'],
+            'title': unescape_bracket_entities(submission['title']),
             'text': submission['selftext'],
             'kind': 'self',
-            'sr': self.target,
+            'sr': self.options.target,
             'uh': modhash
         })
         
-        request = urlrequest.Request(self.submit_url, params, USER_AGENT)
-        response = self._request_json(request)
+        request = urlrequest.Request(self.options.submit_url, params, USER_AGENT)
+        response = request_json(request)
         
-        if self.verbose:
+        if self.options.verbose:
             if '.error.BAD_CAPTCHA.field-captcha' in str(response):
                 print('Could not submit the post because a CAPTCHA was required.')
+            elif '.error.RATELIMIT.field-ratelimit' in str(response):
+                print('Could not submit the post because a submission rate limit was triggered.')
             elif response is None:
-                print('Problem submitting the post. Perhaps the connection was interupted or %s is down.' % self.site)
+                print('Problem submitting the post.' + self._maybe_down_message)
     
     def poll(self):
-        if self.verbose:
+        if self.options.verbose:
             print('Polling for new submissions.')
         
-        request = urlrequest.Request(self.poll_url, headers=USER_AGENT)
-        submissions = self._request_json(request)
+        request = urlrequest.Request(self.options.poll_url, headers=USER_AGENT)
+        submissions = request_json(request)
         
         if submissions is not None:
             modhash = submissions['data']['modhash']
@@ -109,7 +107,7 @@ class SubredditSubmissionsCopier:
                    submission['data']['id'] not in newly_submitted and \
                    submission['data']['id'] not in submitted:
                     self.submit(submission['data'], modhash)
-                    sleep(4)
+                    sleep(self.options.submit_rate)
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -136,9 +134,15 @@ if __name__ == '__main__':
     parser.add_option('-l', '--limit', dest='limit', metavar='LIMIT', type='int',
                       help='amount of submissions to poll for', default=25)
     parser.add_option('-o', '--poll-rate', dest='poll_rate', default=120, type='float',
-                      help='rate in seconds at which to poll for new submissions')
+                      metavar='POLL_RATE', help='rate in seconds at which to poll for new submissions')
+    parser.add_option('-e', '--submit-rate', dest='submit_rate', default=4, type='float',
+                      metavar='SUBMIT_RATE', help='rate in seconds at which to post new submissions')
     
     (options, args) = parser.parse_args()
+    
+    options.poll_url = options.site + 'r/%s/hot.json?limit=%d' % ('+'.join(options.subreddits), options.limit)
+    options.login_url = options.site + 'api/login'
+    options.submit_url = options.site + 'api/submit'
     
     try:
         submitted = open(options.save_file, 'r').read().split('\n')
