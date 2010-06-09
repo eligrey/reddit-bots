@@ -87,10 +87,12 @@ class SubredditSubmissionsCopier:
             approved = stdin.readline()[0].upper()
             title.set(normal_title)
             if approved != 'Y':
+                if self.options.verbose:
+                    print('Submission skipped.') # this fixes the title
                 return
-        
-        if self.options.verbose:
-            print('Submitting %r from %s.\n' % (submission_title, submission['subreddit']))
+            else:
+                if self.options.verbose:
+                    print('Submission approved.')
         
         params = urlparse.urlencode({
             'title': submission_title,
