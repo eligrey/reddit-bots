@@ -10,7 +10,7 @@ Reddit Feeds Auto-Poster
 Reddit Feeds Auto-Poster is a Python script that automatically posts new entries from
 feeds to a subreddit.
 
-Coming soon! (read: sometime in 2010)
+Coming soon! (in Valve time)
 
 
 Reddit Self Posts Copier
@@ -45,11 +45,14 @@ subreddit to a target subreddit.
   <dt><code>-t SUBREDDIT</code>, <code>--target=SUBREDDIT</code></dd>
   <dd>target subreddit</dd>
   
-  <dt><code>-v</code>, <code>--verbose</code> (on by default)</dt>
+  <dt><code>-v</code>, <code>--verbose</code> (enabled by default)</dt>
   <dd>show informative messages</dt>
 
-  <dt><code>-q</code>, <code> --quiet</code></dt>
+  <dt><code>-q</code>, <code>--quiet</code></dt>
   <dd>hide informative messages</dd>
+  
+  <dt><code>-m</code>, <code>--manual</code> (disabled by default)</dt>
+  <dd>enable manual screening of submissions</dd>
   
   <dt><code>-s SITE</code>, <code>--site=SITE</code> (defaults to <code>http://www.reddit.com/</code>)</dt>
   <dd>target reddit-powered site</dd>

@@ -8,7 +8,7 @@ Copies self posts from one or more subreddit to a target subreddit.'''
 # By Eli Grey, http://eligrey.com
 # License: The MIT/X11 license (see COPYING.md)
 
-from sys import stdout
+from sys import stdout, stdin
 from urllib import request as urlrequest
 from urllib import parse as urlparse
 from urllib import error as urlerror
@@ -17,14 +17,9 @@ from time import sleep
 import json
 import re
 
-VERSION = '2010-06-06'
+VERSION = '2010-06-09'
 APP_TITLE = 'Reddit Self Posts Copier'
 USER_AGENT = {'User-agent': APP_TITLE + '/' + VERSION}
-
-def set_title(title):
-    stdout.write('\x1b]2;' + title + '\x07')
-
-set_title(APP_TITLE)
 
 def request_json(request):
     try:
@@ -32,17 +27,27 @@ def request_json(request):
     except (urlerror.URLError, KeyError, ValueError):
         return None
 
-def unescape_bracket_entities(html):
+def unescape_entities(html):
     left_bracket = re.compile('&lt;', re.IGNORECASE)
     right_bracket = re.compile('&gt;', re.IGNORECASE)
-    return right_bracket.sub('>', left_bracket.sub('<', html))
+    ampersand = re.compile('&amp;', re.IGNORECASE)
+    return ampersand.sub('&', right_bracket.sub('>', left_bracket.sub('<', html)))
+
+class Title:
+    def set(self, title):
+        self.title = title
+        stdout.write('\x1b]2;' + title + '\x07')
+    
+    def get(self):
+        return self.title
 
 class RedditInvalidUsernamePasswordException(Exception):
     pass
 
 class SubredditSubmissionsCopier:
-    def __init__(self, options):
+    def __init__(self, options, submitted):
         self.options = options
+        self.submitted = submitted
         self._maybe_down_message = 'Perhaps the connection was interupted or %s is down.' % self.options.site
         cookie_jar = cookiejar.FileCookieJar()
         urlrequest.install_opener(urlrequest.build_opener(urlrequest.HTTPCookieProcessor(cookie_jar)))
@@ -63,17 +68,33 @@ class SubredditSubmissionsCopier:
         if response is None or 'invalid password' in str(response):
             raise RedditInvalidUsernamePasswordException('Login failed. Please ensure that your username and password are correct.')
         
-        set_title('%s - %s' % (self.options.target, APP_TITLE))
+        title.set('%s - %s' % (self.options.target, APP_TITLE))
     
     def submit(self, submission, modhash):
-        newly_submitted.append(submission['id'])
+        self.submitted.append(submission['id'])
+        try:
+            open(self.options.save_file, 'a').write('\n' + submission['id'])
+        except IOError:
+            if self.options.verbose:
+                print('Problem saving submission %s.' % submission['id'])
+        
+        submission_title = unescape_entities(submission['title'])
+        
+        if self.options.manual:
+            normal_title = title.get()
+            title.set('[!] ' + normal_title);
+            print('Submit %r from %s (Y/N)?' % (submission_title, submission['subreddit']))
+            approved = stdin.readline()[0].upper()
+            title.set(normal_title)
+            if approved != 'Y':
+                return
         
         if self.options.verbose:
-            print('Submitting %r from %s.\n' % (submission['title'], submission['subreddit']))
+            print('Submitting %r from %s.\n' % (submission_title, submission['subreddit']))
         
         params = urlparse.urlencode({
-            'title': unescape_bracket_entities(submission['title']),
-            'text': submission['selftext'],
+            'title': submission_title,
+            'text': unescape_entities(submission['selftext']),
             'kind': 'self',
             'sr': self.options.target,
             'uh': modhash
@@ -101,9 +122,7 @@ class SubredditSubmissionsCopier:
             modhash = submissions['data']['modhash']
             submissions = submissions['data']['children']
             for submission in submissions:
-                if submission['data']['is_self'] and \
-                   submission['data']['id'] not in newly_submitted and \
-                   submission['data']['id'] not in submitted:
+                if submission['data']['is_self'] and submission['data']['id'] not in submitted:
                     sleep(self.options.submit_rate)
                     self.submit(submission['data'], modhash)
 
@@ -135,6 +154,8 @@ if __name__ == '__main__':
                       metavar='POLL_RATE', help='rate in seconds at which to poll for new submissions')
     parser.add_option('-e', '--submit-rate', dest='submit_rate', default=4, type='float',
                       metavar='SUBMIT_RATE', help='rate in seconds at which to post new submissions')
+    parser.add_option('-m', '--manual', dest='manual', default=False, action='store_true',
+                      metavar='ENABLE_MANUAL', help='enable manual screening of submissions') 
     
     (options, args) = parser.parse_args()
     
@@ -149,8 +170,10 @@ if __name__ == '__main__':
     except IOError:
         submitted = []
     
-    newly_submitted = []
-    copier = SubredditSubmissionsCopier(options)
+    title = Title()
+    title.set(APP_TITLE)
+    
+    copier = SubredditSubmissionsCopier(options, submitted)
     copier.login()
     
     try:
@@ -158,10 +181,7 @@ if __name__ == '__main__':
             copier.poll()
             sleep(options.poll_rate)
     except KeyboardInterrupt:
-        if len(newly_submitted) > 0:
-            if options.verbose:
-                print('\nSaving ' + options.save_file)
-            open(options.save_file, 'a').write('\n'.join(newly_submitted) + '\n')
-        
+        if options.verbose:
+            print('Closing %s.' % APP_TITLE)
         quit()
 
