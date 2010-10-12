@@ -6,7 +6,7 @@
 Copies self posts from one or more subreddit to a target subreddit.'''
 
 # By Eli Grey, http://eligrey.com
-# License: The MIT/X11 license (see COPYING.md)
+# License: The MIT/X11 license (see LICENSE.md)
 
 from sys import stdout, stdin
 from urllib import request as urlrequest
